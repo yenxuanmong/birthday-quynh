@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎂 Happy Birthday Quỳnh 🎂</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0a0f;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Slideshow container ── */
+    .slideshow {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .slide img {
+      max-width: 100vw;
+      max-height: 100vh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 0;
+      user-select: none;
+      -webkit-user-drag: none;
+      transform-origin: center center;
+    }
+
+    /* ── Ken Burns animations ── */
+    @keyframes kb-zoom-in {
+      from { transform: scale(1)    translate(0, 0); }
+      to   { transform: scale(1.08) translate(0, 0); }
+    }
+    @keyframes kb-zoom-out {
+      from { transform: scale(1.08) translate(0, 0); }
+      to   { transform: scale(1)    translate(0, 0); }
+    }
+    @keyframes kb-pan-right {
+      from { transform: scale(1.05) translate(-2%, 0); }
+      to   { transform: scale(1.05) translate(2%, 0);  }
+    }
+    @keyframes kb-pan-left {
+      from { transform: scale(1.05) translate(2%, 0);  }
+      to   { transform: scale(1.05) translate(-2%, 0); }
+    }
+    @keyframes kb-pan-up {
+      from { transform: scale(1.05) translate(0, 2%);  }
+      to   { transform: scale(1.05) translate(0, -2%); }
+    }
+    @keyframes kb-pan-down {
+      from { transform: scale(1.05) translate(0, -2%); }
+      to   { transform: scale(1.05) translate(0, 2%);  }
+    }
+
+    .kb-zoom-in   img { animation: kb-zoom-in   var(--kb-dur) ease-in-out forwards; }
+    .kb-zoom-out  img { animation: kb-zoom-out  var(--kb-dur) ease-in-out forwards; }
+    .kb-pan-right img { animation: kb-pan-right var(--kb-dur) ease-in-out forwards; }
+    .kb-pan-left  img { animation: kb-pan-left  var(--kb-dur) ease-in-out forwards; }
+    .kb-pan-up    img { animation: kb-pan-up    var(--kb-dur) ease-in-out forwards; }
+    .kb-pan-down  img { animation: kb-pan-down  var(--kb-dur) ease-in-out forwards; }
+
+    /* ── Overlay gradient ── */
+    .slide::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.6) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── Controls ── */
+    .controls {
+      display: none;
+    }
+
+    .btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 50%;
+      transition: background 0.2s, transform 0.15s;
+      line-height: 1;
+    }
+
+    .btn:hover {
+      background: rgba(255,255,255,0.18);
+      transform: scale(1.15);
+    }
+
+    .btn:active { transform: scale(0.95); }
+
+    /* Play/Pause */
+    #playPauseBtn { font-size: 26px; }
+
+    /* Counter */
+    .counter {
+      color: rgba(255,255,255,0.85);
+      font-size: 13px;
+      min-width: 52px;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    /* Dots */
+    .dots {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      cursor: pointer;
+      transition: background 0.25s, transform 0.25s;
+    }
+
+    .dot.active {
+      background: #ff9dbb;
+      transform: scale(1.5);
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #ff9dbb, #ffcc70);
+      width: 0%;
+      transition: width linear;
+      z-index: 200;
+    }
+
+    /* Arrow nav (sides) */
+    .arrow {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+      background: rgba(0,0,0,0.4);
+      border: none;
+      color: #fff;
+      font-size: 28px;
+      padding: 14px 10px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.2s, transform 0.15s;
+      backdrop-filter: blur(6px);
+      line-height: 1;
+    }
+
+    .arrow:hover { background: rgba(0,0,0,0.65); }
+    .arrow.left  { left: 12px; }
+    .arrow.right { right: 12px; }
+
+    /* ── Floating hearts ── */
+    .hearts {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .heart {
+      position: absolute;
+      bottom: -40px;
+      font-size: 20px;
+      opacity: 0;
+      animation: floatUp linear infinite;
+    }
+
+    @keyframes floatUp {
+      0%   { transform: translateY(0)   rotate(0deg);   opacity: 0.8; }
+      100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* ── Caption ── */
+    .caption {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    /* Keyboard hint */
+    .hint {
+      position: fixed;
+      top: 44px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.35);
+      font-size: 11px;
+      letter-spacing: 1px;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    /* ── Door screen ── */
+    #doorScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .door-panel {
+      position: absolute;
+      top: 0;
+      width: 50%;
+      height: 100%;
+      background: #0d0d1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 1.2s cubic-bezier(0.77, 0, 0.18, 1);
+      overflow: hidden;
+    }
+
+    .door-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #1a0a2e 0%, #0d0d1a 50%, #0a0a0f 100%);
+    }
+
+    /* Wood grain lines */
+    .door-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        180deg,
+        transparent 0px,
+        transparent 38px,
+        rgba(255,255,255,0.03) 38px,
+        rgba(255,255,255,0.03) 40px
+      );
+    }
+
+    .door-left  { left: 0;   border-right: 2px solid rgba(255,182,193,0.25); }
+    .door-right { right: 0;  border-left:  2px solid rgba(255,182,193,0.25); }
+
+    /* Door knobs */
+    .door-left  .knob { right: -14px; }
+    .door-right .knob { left:  -14px; }
+
+    .knob {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ffcc70, #c8860a);
+      box-shadow: 0 0 12px rgba(255, 204, 112, 0.6), 0 2px 6px rgba(0,0,0,0.6);
+      z-index: 2;
+    }
+
+    /* Center text on door */
+    .door-center-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      text-align: center;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .door-center-text .door-icon {
+      font-size: 56px;
+      display: block;
+      margin-bottom: 16px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .door-center-text .door-label {
+      font-size: 15px;
+      color: rgba(255,255,255,0.75);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .door-center-text .door-sub {
+      font-size: 12px;
+      color: rgba(255,182,193,0.6);
+      letter-spacing: 2px;
+      margin-top: 8px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1);   filter: drop-shadow(0 0 8px rgba(255,182,193,0.4)); }
+      50%       { transform: scale(1.1); filter: drop-shadow(0 0 18px rgba(255,182,193,0.9)); }
+    }
+
+    /* Glow border on door edges */
+    .door-left  { box-shadow:  inset -4px 0 20px rgba(255,182,193,0.08); }
+    .door-right { box-shadow:  inset  4px 0 20px rgba(255,182,193,0.08); }
+
+    /* Open state */
+    .door-left.open  { transform: perspective(1200px) rotateY(-110deg); transform-origin: left center; }
+    .door-right.open { transform: perspective(1200px) rotateY(110deg);  transform-origin: right center; }
+
+    /* Fade out whole screen after doors open */
+    #doorScreen.fade-out {
+      opacity: 0;
+      transition: opacity 0.5s ease 1s;
+      pointer-events: none;
+    }
+
+    /* Shimmer on hover */
+    #doorScreen:hover .door-panel::before {
+      background: linear-gradient(135deg, #2a0a3e 0%, #1a0d2a 50%, #0d0a1f 100%);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Door screen -->
+<div id="doorScreen" onclick="openDoor()">
+  <div class="door-panel door-left">
+    <div class="knob"></div>
+  </div>
+  <div class="door-panel door-right">
+    <div class="knob"></div>
+  </div>
+  <!-- Center text sits above both panels -->
+  <div class="door-center-text">
+    <span class="door-icon">🎂</span>
+    <div class="door-label">Happy Birthday Quỳnh</div>
+    <div class="door-sub">Nhấn để mở cửa ✨</div>
+  </div>
+</div>
+
+<!-- Floating hearts background -->
+<div class="hearts" id="hearts"></div>
+
+<!-- Top caption -->
+<div class="caption">🎂 Happy Birthday Quỳnh 🎂</div>
+<div class="hint">← → hoặc nhấn nút · Space để phát/dừng</div>
+
+<!-- Progress bar -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- Arrow buttons -->
+<button class="arrow left"  onclick="changeSlide(-1)">&#8249;</button>
+<button class="arrow right" onclick="changeSlide(1)">&#8250;</button>
+
+<!-- Slideshow -->
+<div class="slideshow" id="slideshow"></div>
+
+<!-- Bottom controls -->
+<div class="controls">
+  <button class="btn" onclick="changeSlide(-1)" title="Trước">&#8592;</button>
+  <button class="btn" id="playPauseBtn" onclick="togglePlay()" title="Phát/Dừng">⏸</button>
+  <button class="btn" onclick="changeSlide(1)" title="Tiếp">&#8594;</button>
+  <span class="counter" id="counter">1 / 9</span>
+  <div class="dots" id="dots"></div>
+</div>
+
+<script>
+  // ── Image list ──────────────────────────────────────────────
+  // Đặt các file ảnh vào cùng thư mục với index.html
+  // và đổi tên theo danh sách bên dưới, hoặc sửa đường dẫn tuỳ ý.
+  const v = '?v=' + Date.now();
+  const images = [
+    { src: '1.png' + v,  alt: 'Chúc Mừng Sinh Nhật 20 tuổi' },
+    { src: '2.png' + v,  alt: 'Happy Birthday - Nhóm bạn' },
+    { src: '3.png' + v,  alt: 'HLE Team chibi' },
+    { src: '4.png' + v,  alt: 'Zeka - HLE collage' },
+    { src: '5.png' + v,  alt: 'Hanwha Life Esports' },
+    { src: '6.png' + v,  alt: 'HLE cyber edit' },
+    { src: '7.png' + v,  alt: 'Gumayusi - The Reliable Ace' },
+    { src: '8.png' + v,  alt: 'Worlds 25 - Cinemax' },
+    { src: '9.png' + v,  alt: 'The End 🩷' },
+  ];
+
+  // ── State ────────────────────────────────────────────────────
+  let current   = 0;
+  let playing   = true;
+  let timer     = null;
+  let progTimer = null;
+  const INTERVAL = 4000; // ms per slide
+
+  // ── Build DOM ────────────────────────────────────────────────
+  const slideshow = document.getElementById('slideshow');
+  const dotsEl    = document.getElementById('dots');
+
+  images.forEach((img, i) => {
+    // Slide
+    const slide = document.createElement('div');
+    slide.className = 'slide' + (i === 0 ? ' active' : '');
+    slide.id = 'slide-' + i;
+
+    const image = document.createElement('img');
+    image.src  = img.src;
+    image.alt  = img.alt;
+    image.draggable = false;
+    slide.appendChild(image);
+    slideshow.appendChild(slide);
+
+    // Dot
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goTo(i);
+    dotsEl.appendChild(dot);
+  });
+
+  // ── Ken Burns ────────────────────────────────────────────────
+  const KB_CLASSES = ['kb-zoom-in','kb-zoom-out','kb-pan-right','kb-pan-left','kb-pan-up','kb-pan-down'];
+
+  function applyKenBurns(slideEl) {
+    // Xoá class cũ
+    KB_CLASSES.forEach(c => slideEl.classList.remove(c));
+    // Chọn ngẫu nhiên
+    const cls = KB_CLASSES[Math.floor(Math.random() * KB_CLASSES.length)];
+    slideEl.style.setProperty('--kb-dur', (INTERVAL + 800) + 'ms');
+    // Force restart animation bằng cách clone img
+    const img = slideEl.querySelector('img');
+    img.style.animation = 'none';
+    slideEl.classList.add(cls);
+    // Trigger reflow
+    void img.offsetWidth;
+    img.style.animation = '';
+  }
+
+  // ── Navigation ───────────────────────────────────────────────
+  function goTo(n) {
+    document.getElementById('slide-' + current).classList.remove('active');
+    document.querySelectorAll('.dot')[current].classList.remove('active');
+
+    current = (n + images.length) % images.length;
+
+    const activeSlide = document.getElementById('slide-' + current);
+    activeSlide.classList.add('active');
+    document.querySelectorAll('.dot')[current].classList.add('active');
+    document.getElementById('counter').textContent = (current + 1) + ' / ' + images.length;
+
+    applyKenBurns(activeSlide);
+    resetProgress();
+  }
+
+  function changeSlide(dir) {
+    const next = current + dir;
+    // Nếu đã ở ảnh cuối và đang chạy tới thì dừng
+    if (next >= images.length) {
+      clearInterval(timer);
+      playing = false;
+      const bar = document.getElementById('progressBar');
+      bar.style.transition = 'none';
+      bar.style.width = '0%';
+      return;
+    }
+    goTo(next);
+    if (playing) restartTimer();
+  }
+
+  // ── Auto-play ────────────────────────────────────────────────
+  function startTimer() {
+    timer = setInterval(() => changeSlide(1), INTERVAL);
+  }
+
+  function restartTimer() {
+    clearInterval(timer);
+    startTimer();
+  }
+
+  function togglePlay() {
+    playing = !playing;
+    const btn = document.getElementById('playPauseBtn');
+    if (playing) {
+      btn.textContent = '⏸';
+      startTimer();
+      startProgress();
+    } else {
+      btn.textContent = '▶';
+      clearInterval(timer);
+      clearInterval(progTimer);
+      document.getElementById('progressBar').style.transition = 'none';
+      document.getElementById('progressBar').style.width = '0%';
+    }
+  }
+
+  // ── Progress bar ─────────────────────────────────────────────
+  function resetProgress() {
+    const bar = document.getElementById('progressBar');
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+    if (playing) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          bar.style.transition = `width ${INTERVAL}ms linear`;
+          bar.style.width = '100%';
+        });
+      });
+    }
+  }
+
+  function startProgress() { resetProgress(); }
+
+  // ── Keyboard ─────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+    if (e.key === 'ArrowLeft')                    { e.preventDefault(); changeSlide(-1); }
+    if (e.key === 'p' || e.key === 'P')           togglePlay();
+  });
+
+  // Touch/swipe
+  let touchX = 0;
+  document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
+  document.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) changeSlide(dx < 0 ? 1 : -1);
+  });
+
+  // ── Floating hearts ──────────────────────────────────────────
+  const heartsEl = document.getElementById('hearts');
+  const heartChars = ['💕','💗','🩷','✨','⭐','🌸','🎀'];
+  function spawnHeart() {
+    const h = document.createElement('span');
+    h.className = 'heart';
+    h.textContent = heartChars[Math.floor(Math.random() * heartChars.length)];
+    h.style.left     = Math.random() * 100 + 'vw';
+    h.style.fontSize = (12 + Math.random() * 18) + 'px';
+    const dur = 6 + Math.random() * 8;
+    h.style.animationDuration = dur + 's';
+    h.style.animationDelay    = (Math.random() * 4) + 's';
+    heartsEl.appendChild(h);
+    setTimeout(() => h.remove(), (dur + 4) * 1000);
+  }
+  setInterval(spawnHeart, 800);
+
+  // ── Init ─────────────────────────────────────────────────────
+  // Slideshow chưa chạy, chờ mở cửa
+  playing = false;
+
+  function openDoor() {
+    const screen = document.getElementById('doorScreen');
+    screen.querySelector('.door-left').classList.add('open');
+    screen.querySelector('.door-right').classList.add('open');
+    screen.classList.add('fade-out');
+
+    // Ẩn hẳn sau khi animation xong, rồi bắt slideshow
+    setTimeout(() => {
+      screen.style.display = 'none';
+      playing = true;
+      applyKenBurns(document.getElementById('slide-0'));
+      startTimer();
+      startProgress();
+    }, 1600);
+  }
+</script>
+</body>
+</html>
