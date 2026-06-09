@@ -446,6 +446,8 @@
   // ── Reaction send ────────────────────────────────────────────
   function sendReaction(emoji, label) {
     socket.emit('react', { emoji, label, name: userName });
+    // Ẩn panel sau khi bấm
+    document.getElementById('reactionPanel').classList.remove('show');
   }
 
   // ── Reaction feed pop-up ─────────────────────────────────────
