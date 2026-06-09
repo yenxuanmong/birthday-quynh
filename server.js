@@ -38,6 +38,11 @@ io.on('connection', (socket) => {
   socket.on('react', (data) => {
     startBroadcast({ emoji: data.emoji, name: data.name });
   });
+
+  socket.on('msg', (data) => {
+    // Tin nhắn chỉ gửi 1 lần, không loop
+    io.emit('msg', { text: data.text, name: data.name });
+  });
 });
 
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

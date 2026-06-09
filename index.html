@@ -222,6 +222,64 @@
       80%  { opacity: 1; }
       100% { transform: translateY(-85vh) scale(0.9); opacity: 0; }
     }
+
+    /* ══════════════════════════════════════
+       MESSAGE BAR (dưới cùng)
+    ══════════════════════════════════════ */
+    #msgBar {
+      position: fixed; bottom: 18px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 300; display: none;
+      align-items: center; gap: 8px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,182,193,0.25);
+      border-radius: 50px;
+      padding: 8px 8px 8px 18px;
+      width: min(420px, 92vw);
+    }
+    #msgBar.show { display: flex; }
+    #msgInput {
+      flex: 1; background: none; border: none; outline: none;
+      color: #fff; font-size: 14px; font-family: inherit;
+    }
+    #msgInput::placeholder { color: rgba(255,255,255,0.35); }
+    #msgSendBtn {
+      background: linear-gradient(90deg, #ff9dbb, #ffcc70);
+      border: none; border-radius: 50px;
+      color: #1a0a2e; font-size: 13px; font-weight: 700;
+      padding: 8px 16px; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s; white-space: nowrap;
+    }
+    #msgSendBtn:hover  { opacity: 0.9; transform: scale(1.04); }
+    #msgSendBtn:active { transform: scale(0.96); }
+
+    /* Tin nhắn bay lên */
+    .float-msg {
+      position: absolute;
+      bottom: -80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      animation: floatReact var(--fr-dur) ease-out forwards;
+    }
+    .float-msg .fm-bubble {
+      background: rgba(0,0,0,0.65);
+      border: 1px solid rgba(255,182,193,0.3);
+      border-radius: 16px;
+      color: #fff;
+      font-size: 13px;
+      padding: 6px 14px;
+      max-width: 220px;
+      text-align: center;
+      word-break: break-word;
+      backdrop-filter: blur(6px);
+    }
+    .float-msg .fm-name {
+      font-size: 10px;
+      color: rgba(255,182,193,0.8);
+    }
   </style>
 </head>
 <body>
@@ -272,6 +330,12 @@
   <div class="emoji-btns" id="emojiBtns"></div>
 </div>
 
+<!-- Message bar -->
+<div id="msgBar">
+  <input id="msgInput" type="text" placeholder="Nhắn gì đó cho Quỳnh..." maxlength="80" autocomplete="off" />
+  <button id="msgSendBtn" onclick="sendMessage()">Gửi 💌</button>
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script>
   // ── Config ───────────────────────────────────────────────────
@@ -299,9 +363,12 @@
   // ── Socket.IO ────────────────────────────────────────────────
   const socket = io();
 
-  // Nhận reaction từ server → hiển thị 1 bông bay lên
   socket.on('react', (item) => {
     spawnFloat(item.emoji, item.name);
+  });
+
+  socket.on('msg', (item) => {
+    spawnMessage(item.text, item.name);
   });
 
   // ── Spawn float emoji ─────────────────────────────────────────
@@ -331,8 +398,37 @@
 
   function sendReaction(emoji) {
     socket.emit('react', { emoji, name: userName });
-    // Ẩn panel sau khi bấm
     document.getElementById('reactionPanel').classList.remove('show');
+  }
+
+  // ── Message ───────────────────────────────────────────────────
+  function sendMessage() {
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if (!text) return;
+    socket.emit('msg', { text, name: userName });
+    input.value = '';
+    document.getElementById('msgBar').classList.remove('show');
+  }
+
+  document.getElementById('msgInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  function spawnMessage(text, name) {
+    const el = document.createElement('div');
+    el.className = 'float-msg';
+    el.style.left = (10 + Math.random() * 70) + 'vw';
+    const dur = 4 + Math.random() * 2;
+    el.style.setProperty('--fr-dur', dur + 's');
+    el.innerHTML = `<div class="fm-bubble">${escHtml(text)}</div>
+                    <div class="fm-name">${escHtml(name)}</div>`;
+    floatLayer.appendChild(el);
+    setTimeout(() => el.remove(), (dur + 0.2) * 1000);
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   // ── Build Slideshow DOM ──────────────────────────────────────
@@ -442,6 +538,7 @@
     document.getElementById('nameOverlay').classList.remove('show');
     document.getElementById('greetBadge').textContent = `👋 ${userName}`;
     document.getElementById('reactionPanel').classList.add('show');
+    document.getElementById('msgBar').classList.add('show');
     playing = true;
     applyKenBurns(document.getElementById('slide-0'));
     startTimer();
