@@ -176,6 +176,27 @@
       color: rgba(255,255,255,0.8); font-size: 12px;
       padding: 5px 12px; white-space: nowrap;
     }
+    /* Toggle button for reaction panel */
+    #reactionToggle {
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,182,193,0.3); border-radius: 50%;
+      color: #fff; font-size: 18px; width: 44px; height: 44px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, transform 0.2s;
+      align-self: flex-end;
+    }
+    #reactionToggle:hover { background: rgba(255,255,255,0.15); transform: scale(1.1); }
+    /* Collapsible content */
+    #reactionContent {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+      overflow: hidden; max-height: 0;
+      transition: max-height 0.35s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+    #reactionContent.open {
+      max-height: 400px;
+      opacity: 1;
+    }
     .emoji-btns { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
     .emoji-btn {
       background: rgba(0,0,0,0.55); backdrop-filter: blur(10px);
@@ -226,22 +247,51 @@
     /* ══════════════════════════════════════
        MESSAGE BAR (dưới cùng)
     ══════════════════════════════════════ */
-    #msgBar {
+    #msgBarWrapper {
       position: fixed; bottom: 18px; left: 50%;
       transform: translateX(-50%);
       z-index: 300; display: none;
+      align-items: center; gap: 0;
+    }
+    #msgBarWrapper.show { display: flex; }
+    /* Toggle button for msg bar */
+    #msgToggle {
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,182,193,0.3); border-radius: 50%;
+      color: #fff; font-size: 18px; width: 44px; height: 44px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, transform 0.2s; flex-shrink: 0;
+    }
+    #msgToggle:hover { background: rgba(255,255,255,0.15); transform: scale(1.1); }
+    /* Collapsible msg bar */
+    #msgBar {
+      display: flex;
       align-items: center; gap: 8px;
       background: rgba(0,0,0,0.6);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(255,182,193,0.25);
       border-radius: 50px;
       padding: 8px 8px 8px 18px;
-      width: min(420px, 92vw);
+      overflow: hidden;
+      max-width: 0;
+      opacity: 0;
+      transition: max-width 0.35s ease, opacity 0.3s ease, padding 0.35s ease, border-width 0.35s ease;
+      border-width: 0;
+      padding: 8px 0;
+      margin-left: 0;
+      white-space: nowrap;
     }
-    #msgBar.show { display: flex; }
+    #msgBar.open {
+      max-width: min(420px, 80vw);
+      opacity: 1;
+      border-width: 1px;
+      padding: 8px 8px 8px 18px;
+      margin-left: 8px;
+    }
     #msgInput {
       flex: 1; background: none; border: none; outline: none;
       color: #fff; font-size: 14px; font-family: inherit;
+      min-width: 160px;
     }
     #msgInput::placeholder { color: rgba(255,255,255,0.35); }
     #msgSendBtn {
@@ -326,14 +376,20 @@
 
 <!-- Reaction panel -->
 <div id="reactionPanel">
-  <div id="greetBadge">👋 Xin chào!</div>
-  <div class="emoji-btns" id="emojiBtns"></div>
+  <div id="reactionContent">
+    <div id="greetBadge">👋 Xin chào!</div>
+    <div class="emoji-btns" id="emojiBtns"></div>
+  </div>
+  <button id="reactionToggle" onclick="toggleReaction()" title="Emoji">☺</button>
 </div>
 
-<!-- Message bar -->
-<div id="msgBar">
-  <input id="msgInput" type="text" placeholder="Nhắn gì đó cho Quỳnh..." maxlength="80" autocomplete="off" />
-  <button id="msgSendBtn" onclick="sendMessage()">Gửi 💌</button>
+<!-- Message bar wrapper -->
+<div id="msgBarWrapper">
+  <button id="msgToggle" onclick="toggleMsgBar()" title="Nhắn tin">✉</button>
+  <div id="msgBar">
+    <input id="msgInput" type="text" placeholder="Nhắn gì đó cho Quỳnh..." maxlength="80" autocomplete="off" />
+    <button id="msgSendBtn" onclick="sendMessage()">Gửi 💌</button>
+  </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -349,7 +405,7 @@
     { src: '6.png' + v, alt: 'HLE cyber edit' },
     { src: '7.png' + v, alt: 'Gumayusi - The Reliable Ace' },
     { src: '8.png' + v, alt: 'Worlds 25 - Cinemax' },
-    { src: '9.png' + v, alt: 'Worlds 25 - Cinemax' },
+    { src: '9.png' + v, alt: 'Quà Của Ngọc' },
     { src: '10.png' + v, alt: 'The End 🩷' },
   ];
 
@@ -396,7 +452,7 @@
 
   function sendReaction(emoji) {
     socket.emit('react', { emoji, name: userName });
-    document.getElementById('reactionPanel').classList.remove('show');
+    toggleReaction(false);
   }
 
   function sendMessage() {
@@ -405,12 +461,41 @@
     if (!text) return;
     socket.emit('msg', { text, name: userName });
     input.value = '';
-    document.getElementById('msgBar').classList.remove('show');
+    toggleMsgBar(false);
   }
 
   document.getElementById('msgInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') sendMessage();
   });
+
+  // Toggle reaction panel
+  function toggleReaction(force) {
+    const content = document.getElementById('reactionContent');
+    const btn = document.getElementById('reactionToggle');
+    const open = force !== undefined ? force : !content.classList.contains('open');
+    if (open) {
+      content.classList.add('open');
+      btn.textContent = '✕';
+    } else {
+      content.classList.remove('open');
+      btn.textContent = '☺';
+    }
+  }
+
+  // Toggle message bar
+  function toggleMsgBar(force) {
+    const bar = document.getElementById('msgBar');
+    const btn = document.getElementById('msgToggle');
+    const open = force !== undefined ? force : !bar.classList.contains('open');
+    if (open) {
+      bar.classList.add('open');
+      btn.textContent = '✕';
+      setTimeout(() => document.getElementById('msgInput').focus(), 350);
+    } else {
+      bar.classList.remove('open');
+      btn.textContent = '✉';
+    }
+  }
 
   function spawnMessage(text, name) {
     const el = document.createElement('div');
@@ -536,7 +621,7 @@
     document.getElementById('nameOverlay').classList.remove('show');
     document.getElementById('greetBadge').textContent = `👋 ${userName}`;
     document.getElementById('reactionPanel').classList.add('show');
-    document.getElementById('msgBar').classList.add('show');
+    document.getElementById('msgBarWrapper').classList.add('show');
     playing = true;
     applyKenBurns(document.getElementById('slide-0'));
     startTimer();
