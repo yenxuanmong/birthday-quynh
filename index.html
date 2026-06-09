@@ -377,7 +377,8 @@
   function spawnFloat(emoji, name) {
     const el = document.createElement('div');
     el.className = 'float-react';
-    el.style.left = (8 + Math.random() * 84) + 'vw';
+    // Bên trái: 2% - 30%
+    el.style.left = (2 + Math.random() * 28) + 'vw';
     const dur = 3.5 + Math.random() * 1.5;
     el.style.setProperty('--fr-dur', dur + 's');
     el.innerHTML = `<span class="fr-emoji">${emoji}</span>
@@ -418,7 +419,8 @@
   function spawnMessage(text, name) {
     const el = document.createElement('div');
     el.className = 'float-msg';
-    el.style.left = (10 + Math.random() * 70) + 'vw';
+    // Bên phải: 62% - 88%
+    el.style.left = (62 + Math.random() * 26) + 'vw';
     const dur = 4 + Math.random() * 2;
     el.style.setProperty('--fr-dur', dur + 's');
     el.innerHTML = `<div class="fm-bubble">${escHtml(text)}</div>
