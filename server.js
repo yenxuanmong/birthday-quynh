@@ -27,13 +27,10 @@ io.on('connection', (socket) => {
       id:    Date.now() + Math.random(),
       emoji: data.emoji,
       name:  data.name,
-      label: data.label,
       ts:    Date.now()
     };
     reactions.push(item);
-    // Giới hạn 200 reactions gần nhất
     if (reactions.length > 200) reactions.splice(0, reactions.length - 200);
-    // Broadcast cho tất cả
     io.emit('react', item);
   });
 });
