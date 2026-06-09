@@ -299,39 +299,24 @@
   // ── Socket.IO ────────────────────────────────────────────────
   const socket = io();
 
-  // Khi có reaction từ bất kỳ ai (kể cả mình) → bay lên
+  // Nhận reaction từ server → hiển thị 1 bông bay lên
   socket.on('react', (item) => {
     spawnFloat(item.emoji, item.name);
   });
 
   // ── Spawn float emoji ─────────────────────────────────────────
   const floatLayer = document.getElementById('floatLayer');
-  let currentFloat = null; // interval của bông đang chạy
 
   function spawnFloat(emoji, name) {
-    // Dừng bông cũ nếu có
-    if (currentFloat) {
-      clearInterval(currentFloat);
-      currentFloat = null;
-      floatLayer.innerHTML = '';
-    }
-
-    function spawnOne() {
-      const el = document.createElement('div');
-      el.className = 'float-react';
-      const left = 8 + Math.random() * 84;
-      el.style.left = left + 'vw';
-      const dur = 3.5 + Math.random() * 1.5;
-      el.style.setProperty('--fr-dur', dur + 's');
-      el.innerHTML = `
-        <span class="fr-emoji">${emoji}</span>
-        <span class="fr-name">${name}</span>`;
-      floatLayer.appendChild(el);
-      setTimeout(() => el.remove(), (dur + 0.2) * 1000);
-    }
-
-    spawnOne(); // bắt đầu ngay
-    currentFloat = setInterval(spawnOne, 2000); // lặp mỗi 2 giây
+    const el = document.createElement('div');
+    el.className = 'float-react';
+    el.style.left = (8 + Math.random() * 84) + 'vw';
+    const dur = 3.5 + Math.random() * 1.5;
+    el.style.setProperty('--fr-dur', dur + 's');
+    el.innerHTML = `<span class="fr-emoji">${emoji}</span>
+                    <span class="fr-name">${name}</span>`;
+    floatLayer.appendChild(el);
+    setTimeout(() => el.remove(), (dur + 0.2) * 1000);
   }
 
   // ── Build Emoji Buttons ──────────────────────────────────────
