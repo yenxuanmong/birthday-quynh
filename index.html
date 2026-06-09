@@ -363,27 +363,9 @@
   // ── Socket.IO ────────────────────────────────────────────────
   const socket = io();
 
-  // Nhận từ bất kỳ ai → hiển thị ngay (1 lần, không loop)
+  // Nhận từ server → hiển thị cho tất cả (kể cả chính mình)
   socket.on('react', (item) => spawnFloat(item.emoji, item.name));
   socket.on('msg',   (item) => spawnMessage(item.text, item.name));
-
-  // ── Local loop state (chỉ loop của chính mình) ───────────────
-  let myReactLoop = null;
-  let myMsgLoop   = null;
-
-  function startMyReactLoop(emoji, name) {
-    if (myReactLoop) clearInterval(myReactLoop);
-    myReactLoop = setInterval(() => {
-      socket.emit('react', { emoji, name });
-    }, 2200);
-  }
-
-  function startMyMsgLoop(text, name) {
-    if (myMsgLoop) clearInterval(myMsgLoop);
-    myMsgLoop = setInterval(() => {
-      socket.emit('msg', { text, name });
-    }, 2200);
-  }
 
   // ── Spawn float emoji ─────────────────────────────────────────
   const floatLayer = document.getElementById('floatLayer');
@@ -413,7 +395,6 @@
 
   function sendReaction(emoji) {
     socket.emit('react', { emoji, name: userName });
-    startMyReactLoop(emoji, userName);
     document.getElementById('reactionPanel').classList.remove('show');
   }
 
@@ -423,7 +404,6 @@
     const text = input.value.trim();
     if (!text) return;
     socket.emit('msg', { text, name: userName });
-    startMyMsgLoop(text, userName);
     input.value = '';
     document.getElementById('msgBar').classList.remove('show');
   }
