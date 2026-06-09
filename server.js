@@ -13,35 +13,35 @@ app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 // ── State ──────────────────────────────────────────────────────
 let currentReaction = null; // { emoji, name }
+let currentMsg      = null; // { text, name }
 let broadcastTimer  = null;
+let msgTimer        = null;
 
 function startBroadcast(reaction) {
-  // Dừng vòng cũ
   if (broadcastTimer) clearInterval(broadcastTimer);
   currentReaction = reaction;
-
-  // Broadcast ngay lập tức
   io.emit('react', reaction);
+  broadcastTimer = setInterval(() => io.emit('react', currentReaction), 2000);
+}
 
-  // Lặp mỗi 2 giây cho tất cả
-  broadcastTimer = setInterval(() => {
-    io.emit('react', currentReaction);
-  }, 2000);
+function startMsgBroadcast(msg) {
+  if (msgTimer) clearInterval(msgTimer);
+  currentMsg = msg;
+  io.emit('msg', msg);
+  msgTimer = setInterval(() => io.emit('msg', currentMsg), 2000);
 }
 
 io.on('connection', (socket) => {
-  // Gửi reaction hiện tại cho người vừa vào
-  if (currentReaction) {
-    socket.emit('react', currentReaction);
-  }
+  // Gửi state hiện tại cho người vừa vào
+  if (currentReaction) socket.emit('react', currentReaction);
+  if (currentMsg)      socket.emit('msg',   currentMsg);
 
   socket.on('react', (data) => {
     startBroadcast({ emoji: data.emoji, name: data.name });
   });
 
   socket.on('msg', (data) => {
-    // Tin nhắn chỉ gửi 1 lần, không loop
-    io.emit('msg', { text: data.text, name: data.name });
+    startMsgBroadcast({ text: data.text, name: data.name });
   });
 });
 
